@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Budgets · Finance Tracker{% endblock %}
+{% block content %}
+<h2>Budgets</h2>
+<div class="card">
+  <form id="budgetForm" class="form inline gap">
+    <input name="category_id" type="number" placeholder="Category ID" required>
+    <input name="month" type="number" min="1" max="12" placeholder="MM" required>
+    <input name="year" type="number" min="2000" max="2100" placeholder="YYYY" required>
+    <input name="limit_amount" type="number" step="0.01" placeholder="Limit Amount" required>
+    <button class="btn primary" type="submit">Save Budget</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Check Budget</h3>
+  <form id="checkForm" class="form inline gap">
+    <input name="budget_id" type="number" placeholder="Budget ID" required>
+    <button class="btn" type="submit">Get</button>
+  </form>
+  <div id="budgetOut" class="notice"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('budgetForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const payload = {
+    category_id: f.category_id.value,
+    month: f.month.value,
+    year: f.year.value,
+    limit_amount: f.limit_amount.value
+  };
+  const res = await fetch('/api/budgets/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  const j = await res.json();
+  if(res.ok){ toast('Budget saved'); } else { toast(j.error || 'Failed to save budget', 'error'); }
+});
+
+document.getElementById('checkForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = e.target.budget_id.value;
+  const res = await fetch('/api/budgets/' + id);
+  const b = await res.json();
+  if(res.ok){
+    const over = (b.spent > b.limit_amount);
+    document.getElementById('budgetOut').innerHTML = `
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-label">Limit</div><div class="kpi-value">₹${(+b.limit_amount).toFixed(2)}</div></div>
+        <div class="kpi"><div class="kpi-label">Spent</div><div class="kpi-value ${over?'bad':''}">₹${(+b.spent).toFixed(2)}</div></div>
+      </div>
+      <p class="${over?'error-text':'ok-text'}">${over ? '⚠ Budget exceeded' : '✅ Within budget'}</p>`;
+  } else {
+    toast(b.error || 'Failed to fetch budget', 'error');
+  }
+});
+</script>
+{% endblock %}

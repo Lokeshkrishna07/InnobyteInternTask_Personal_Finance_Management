@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Reports · Finance Tracker{% endblock %}
+{% block content %}
+<h2>Reports</h2>
+<div class="card">
+  <form id="reportForm" class="form inline gap">
+    <input name="month" type="number" min="1" max="12" placeholder="Month (1-12)">
+    <input name="year" type="number" min="2000" max="2100" placeholder="Year">
+    <input name="category_id" type="number" placeholder="Category ID (optional)">
+    <button class="btn" type="submit">Run</button>
+  </form>
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">Income</div><div class="kpi-value" id="kpiIncome">₹0</div></div>
+    <div class="kpi"><div class="kpi-label">Expenses</div><div class="kpi-value" id="kpiExpense">₹0</div></div>
+    <div class="kpi"><div class="kpi-label">Savings</div><div class="kpi-value" id="kpiSavings">₹0</div></div>
+  </div>
+  <canvas id="bar" width="700" height="300" aria-label="Income vs Expenses"></canvas>
+</div>
+
+<div class="card">
+  <h3>Range Report</h3>
+  <form id="rangeForm" class="form inline gap">
+    <input name="start_date" type="date" required>
+    <input name="end_date" type="date" required>
+    <button class="btn" type="submit">Run</button>
+  </form>
+  <pre id="rangeOut" class="code"></pre>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function drawBarChart(income, expense){
+  const c = document.getElementById('bar');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const max = Math.max(income, expense, 1);
+  const pad = 40;
+  const w = (c.width - pad*2) / 3;
+  const scale = (c.height - pad*2) / max;
+
+  ctx.strokeStyle = '#ccd6dd';
+  ctx.beginPath();
+  ctx.moveTo(pad, pad);
+  ctx.lineTo(pad, c.height - pad);
+  ctx.lineTo(c.width - pad, c.height - pad);
+  ctx.stroke();
+
+  function bar(x, val, label){
+    const h = val * scale;
+    const y = c.height - pad - h;
+    ctx.fillStyle = label==='Income' ? '#16a34a' : '#dc2626';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#e5e7eb';
+    ctx.font = '12px Inter, system-ui, -apple-system, Segoe UI, Roboto';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + w/2, c.height - pad + 16);
+    ctx.fillText('₹' + val.toFixed(2), x + w/2, y - 6);
+  }
+  bar(pad + w*0.5, income, 'Income');
+  bar(pad + w*1.8, expense, 'Expense');
+}
+
+document.getElementById('reportForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const m = f.month.value || (new Date().getMonth()+1);
+  const y = f.year.value || (new Date().getFullYear());
+  const cat = f.category_id.value;
+  let url = `/api/reports/monthly?month=${m}&year=${y}`;
+  if(cat) url += `&category_id=${cat}`;
+  const res = await fetch(url);
+  const r = await res.json();
+  if(res.ok){
+    document.getElementById('kpiIncome').textContent = '₹' + (+r.income).toFixed(2);
+    document.getElementById('kpiExpense').textContent = '₹' + (+r.expense).toFixed(2);
+    document.getElementById('kpiSavings').textContent = '₹' + (+r.savings).toFixed(2);
+    drawBarChart(+r.income, +r.expense);
+  } else {
+    toast('Report failed', 'error');
+  }
+});
+
+document.getElementById('rangeForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const url = `/api/reports/range?start_date=${f.start_date.value}&end_date=${f.end_date.value}`;
+  const res = await fetch(url);
+  const r = await res.json();
+  if(res.ok){
+    document.getElementById('rangeOut').textContent = JSON.stringify(r, null, 2);
+  } else {
+    toast('Range report failed', 'error');
+  }
+});
+</script>
+{% endblock %}

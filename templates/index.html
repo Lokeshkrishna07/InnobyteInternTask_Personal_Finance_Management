@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Home · Finance Tracker{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <h1>Track money the easy way.</h1>
+    <p>Add income & expenses, set monthly budgets, and see clear reports — all in one place.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="/register">Create account</a>
+      <a class="btn" href="/login">Login</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-label">Get started</div>
+      <div class="stat-value">3 steps</div>
+      <ul class="checklist">
+        <li>Register / Login</li>
+        <li>Create categories</li>
+        <li>Add transactions</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="grid-3">
+  <div class="card">
+    <h3>Categories</h3>
+    <p>Create income & expense categories like <em>Salary</em>, <em>Food</em>, or <em>Rent</em>.</p>
+    <a class="link" href="/transactions">Manage →</a>
+  </div>
+  <div class="card">
+    <h3>Reports</h3>
+    <p>See monthly totals for income, expenses, and savings. Filter by category.</p>
+    <a class="link" href="/reports">Open →</a>
+  </div>
+  <div class="card">
+    <h3>Budgets</h3>
+    <p>Set monthly limits and get alerts when you overspend.</p>
+    <a class="link" href="/budgets">Configure →</a>
+  </div>
+</section>
+{% endblock %}

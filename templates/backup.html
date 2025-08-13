@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Backup · Finance Tracker{% endblock %}
+{% block content %}
+<h2>Backup & Restore</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Create Backup</h3>
+    <button class="btn" id="create">Create backup</button>
+    <pre class="code" id="createOut"></pre>
+  </div>
+  <div class="card">
+    <h3>Available Backups</h3>
+    <button class="btn" id="list">Refresh list</button>
+    <ul id="bkList" class="list"></ul>
+    <div class="row">
+      <input id="restoreName" placeholder="backup filename">
+      <button class="btn" id="restore">Restore</button>
+    </div>
+    <pre class="code" id="restoreOut"></pre>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function listBackups(){
+  const res = await fetch('/api/admin/backups');
+  const j = await res.json();
+  const ul = document.getElementById('bkList');
+  ul.innerHTML = '';
+  (j.backups || []).forEach(name => {
+    const li = document.createElement('li');
+    li.textContent = name;
+    li.className = 'list-item';
+    li.onclick = () => document.getElementById('restoreName').value = name;
+    ul.appendChild(li);
+  });
+}
+
+document.getElementById('create').onclick = async () => {
+  const res = await fetch('/api/admin/backup', {method:'POST'});
+  const j = await res.json();
+  document.getElementById('createOut').textContent = JSON.stringify(j, null, 2);
+  if(res.ok) { toast('Backup created'); listBackups(); } else { toast('Backup failed', 'error'); }
+};
+document.getElementById('list').onclick = listBackups;
+document.getElementById('restore').onclick = async () => {
+  const fname = document.getElementById('restoreName').value.trim();
+  if(!fname) return toast('Enter a filename', 'error');
+  const res = await fetch('/api/admin/restore', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({filename: fname})});
+  const j = await res.json();
+  document.getElementById('restoreOut').textContent = JSON.stringify(j, null, 2);
+  if(res.ok) toast('Database restored'); else toast(j.error || 'Restore failed', 'error');
+};
+listBackups();
+</script>
+{% endblock %}

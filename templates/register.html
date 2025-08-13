@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Register · Finance Tracker{% endblock %}
+{% block content %}
+<div class="auth">
+  <h2>Create your account</h2>
+  <form class="form" id="regForm">
+    <label>Username
+      <input name="username" placeholder="yourname" required>
+    </label>
+    <label>Password
+      <input name="password" type="password" placeholder="Choose a strong password" required>
+    </label>
+    <button class="btn primary" type="submit">Register</button>
+    <p class="muted">Already have an account? <a href="/login">Login</a></p>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('regForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const res = await fetch('/api/auth/register', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({username:f.username.value, password:f.password.value})
+  });
+  const j = await res.json();
+  if(res.ok){ toast('Account created'); location.href='/login'; }
+  else{ toast(j.error || 'Registration failed', 'error'); }
+});
+</script>
+{% endblock %}
